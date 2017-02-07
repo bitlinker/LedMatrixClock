@@ -1,5 +1,18 @@
 #include "Screen.h"
 
+// 16x8 test
+const byte IMG01[] = 
+{
+  B00111000, B00010000,
+  B01000100, B00110000,
+  B01000100, B00010000,
+  B01000100, B00010000,
+  B01000100, B00010000,
+  B01000100, B00010000,
+  B01000100, B00010000,
+  B00111000, B00111000
+};
+
 const byte IMAGES[][8] = {
   {
     B00111000,
@@ -175,7 +188,7 @@ void Screen::updateScreen(uint8_t hour, uint8_t minute, uint8_t second)
 //  setPixel(1, 0, 7, true);
 //  setPixel(1, 2, 0, true);
 
-  drawBitmap(0, 0, -3, 8, 16, IMAGES[7]);
+  drawBitmap(0, 7, -1, 16, 8, IMG01);
   
 //  setPixel(0, 15, 2, dt);
 //  setPixel(0, 15, 5, dt);
