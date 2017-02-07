@@ -140,15 +140,19 @@ inline uint8_t* Screen::getPagePtr(uint8_t pageNum)
 
 // TODO: move
 boolean dot = false;
+int8_t scrlx = 0;
 int8_t scrly = 0;
 int8_t scrlDir = 1;
 void Screen::updateScreen(uint8_t hour, uint8_t minute, uint8_t second)
 {
-  scrly += scrlDir;
-  if (scrly >= 8 || scrly <= -8) scrlDir = -scrlDir;
+  //scrly += scrlDir;
+  scrlx += scrlDir;
+  //if (scrly >= 32 || scrly <= -32) scrlDir = -scrlDir;
+  if (scrlx >= 64 || scrlx <= -64) scrlDir = -scrlDir;
 
-  scrollY(scrly);
+  scrollX(scrlx);
   //scrollY(scrly);
+  
 //  drawBitmap(0, 3, hour / 10, 8, 8, IMAGES[hour / 10]);
 //  drawDigit(3, hour / 10, dot);
 //  drawDigit(2, hour % 10, dot);
@@ -159,6 +163,8 @@ void Screen::updateScreen(uint8_t hour, uint8_t minute, uint8_t second)
 
   setPixel(0, 0, 0, true);
   setPixel(0, 1, 0, true);
+  setPixel(0, 7, 0, true);
+  setPixel(0, 7, 1, true);
   setPixel(0, 31, 0, true);
   setPixel(0, 31, 7, true);
   setPixel(0, 0, 7, true);
@@ -240,6 +246,16 @@ void Screen::drawBitmap(uint8_t page, uint8_t x, uint8_t y, uint8_t width, uint8
 {  
   for (int j = 0; j < height; ++j)
   {
+
+//    
+//    int8_t colByte = pageXX / 8;
+//    int8_t colBit = pageXX % 8; // TODO: modulo
+//
+//    for (int x = 0; x < PAGE_WIDTH; ++x)
+//    {
+//      // TODO
+//    }
+//    
     //mFramebuffer[(j + y) * 8  + x] = data[j];
 //    for (int i = 0; i < width; ++i)
 //    {    
@@ -248,20 +264,42 @@ void Screen::drawBitmap(uint8_t page, uint8_t x, uint8_t y, uint8_t width, uint8
   }
 }
 
+static void Swap32(uint32_t& val)
+{
+  val =   ((val >> 24) & 0xff) |
+          ((val << 8) & 0xff0000) |
+          ((val >> 8) & 0xff00) |
+          ((val << 24) & 0xff000000);
+}
+
 void Screen::display()
 {  
+  // Column calculations
+  int8_t col = -mShiftX; 
+  int8_t pageX = col / PAGE_WIDTH;
+  if (col < 0) --pageX;
+  int8_t pageXX = col - pageX * PAGE_WIDTH; // Offset from start of the page, columns (bits)
+    
   for (int8_t y = 0; y < PAGE_HEIGHT; ++y)
   {
-    int8_t row = y - mShiftY;
-    int8_t pageY = row / PAGE_HEIGHT; // page index
-    if (row < 0) --pageY;
-    int8_t pageYY = row - pageY * PAGE_HEIGHT; // offset in rows, 0...8
-    
-    uint8_t* rowPtr = getPagePtrMirrored(0, pageY) + pageYY * PAGE_STRIDE;
-    
-    // TODO: shiftX
-    //uint32_t row = (mFb1[0] << mShiftX) | (mFb2[0] >> (32 - mShiftX)); // TODO: check
-    //const uint8_t* rowPtr = (uint8_t*)&row;
+    // Row calculations
+    int8_t row = y - mShiftY; // Visible row
+    int8_t pageY; // page index
+    if (row >= 0)
+      pageY = row / PAGE_HEIGHT;
+    else
+      pageY = (row + 1) / PAGE_HEIGHT - 1;
+    int8_t pageYY = row - pageY * PAGE_HEIGHT; // Offset from start of the page, rows
+    int8_t rowOffset = pageYY * PAGE_STRIDE; // Offset from start of the page, bytes
+
+    // Assumption: This calculations is based on that page width is 32!
+    uint32_t rowBegin = *(uint32_t*)(getPagePtrMirrored(pageX, pageY) + rowOffset);
+    uint32_t rowEnd = *(uint32_t*)(getPagePtrMirrored(pageX + 1, pageY) + rowOffset);
+    Swap32(rowBegin);
+    Swap32(rowEnd);
+    uint32_t rowData = (rowBegin << pageXX) | (rowEnd >> (32 - pageXX));
+    Swap32(rowData);
+    const uint8_t* rowPtr = (uint8_t*)&rowData;
     
     digitalWrite(mPinCs, LOW);
     for (uint8_t dev = 0; dev < NUM_LED_DEVICES; ++dev)   

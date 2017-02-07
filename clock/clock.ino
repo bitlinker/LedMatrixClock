@@ -29,7 +29,7 @@ void onClockInterrupt()
   if (mClockCycles == 1000) mClockCycles = 0;
   
   if (mClockCycles % 250 == 0) mNeedControlsUpdate = true; // Update controls
-  if (mClockCycles % 750 == 0) mNeedScreenUpdate = true; // Update screen (~20 fps)
+  if (mClockCycles % 150 == 0) mNeedScreenUpdate = true; // Update screen (~20 fps)
   if (mClockCycles == 0) mNeedRtcUpdate = true; // Update RTC
 }
 
