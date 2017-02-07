@@ -14,7 +14,7 @@ class Screen
     void clearAll();
     void clearPage(uint8_t page);
     void setPixel(uint8_t page, uint8_t x, uint8_t y, boolean state);
-    void drawBitmap(uint8_t page, uint8_t x, uint8_t y, uint8_t width, uint8_t height, const uint8_t* data);
+    void drawBitmap(uint8_t page, int8_t x, int8_t y, uint8_t width, uint8_t height, const uint8_t* data);
     void scrollX(int8_t value) { mShiftX = value;}
     void scrollY(int8_t value) { mShiftY = value;}
    

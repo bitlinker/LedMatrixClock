@@ -146,11 +146,11 @@ int8_t scrlDir = 1;
 void Screen::updateScreen(uint8_t hour, uint8_t minute, uint8_t second)
 {
   //scrly += scrlDir;
-  scrlx += scrlDir;
+  //scrlx += scrlDir;
   //if (scrly >= 32 || scrly <= -32) scrlDir = -scrlDir;
-  if (scrlx >= 64 || scrlx <= -64) scrlDir = -scrlDir;
+  //if (scrlx >= 64 || scrlx <= -64) scrlDir = -scrlDir;
 
-  scrollX(scrlx);
+  //scrollX(scrlx);
   //scrollY(scrly);
   
 //  drawBitmap(0, 3, hour / 10, 8, 8, IMAGES[hour / 10]);
@@ -161,19 +161,21 @@ void Screen::updateScreen(uint8_t hour, uint8_t minute, uint8_t second)
 
   boolean dt = second % 2;
 
-  setPixel(0, 0, 0, true);
-  setPixel(0, 1, 0, true);
-  setPixel(0, 7, 0, true);
-  setPixel(0, 7, 1, true);
-  setPixel(0, 31, 0, true);
-  setPixel(0, 31, 7, true);
-  setPixel(0, 0, 7, true);
-  
-  setPixel(1, 0, 0, true);
-  setPixel(1, 31, 0, true);
-  setPixel(1, 31, 7, true);
-  setPixel(1, 0, 7, true);
-  setPixel(1, 2, 0, true);
+//  setPixel(0, 0, 0, true);
+//  setPixel(0, 1, 0, true);
+//  setPixel(0, 7, 0, true);
+//  setPixel(0, 7, 1, true);
+//  setPixel(0, 31, 0, true);
+//  setPixel(0, 31, 7, true);
+//  setPixel(0, 0, 7, true);
+//  
+//  setPixel(1, 0, 0, true);
+//  setPixel(1, 31, 0, true);
+//  setPixel(1, 31, 7, true);
+//  setPixel(1, 0, 7, true);
+//  setPixel(1, 2, 0, true);
+
+  drawBitmap(0, 0, -3, 8, 16, IMAGES[7]);
   
 //  setPixel(0, 15, 2, dt);
 //  setPixel(0, 15, 5, dt);
@@ -241,26 +243,55 @@ void Screen::setPixel(uint8_t page, uint8_t x, uint8_t y, boolean state)
     ptr[offset] &= ~val;
 }
 
-// x is mul 8 and width is 8 now...
-void Screen::drawBitmap(uint8_t page, uint8_t x, uint8_t y, uint8_t width, uint8_t height, const uint8_t* data)
+void Screen::drawBitmap(uint8_t page, int8_t x, int8_t y, uint8_t width, uint8_t height, const uint8_t* data)
 {  
-  for (int j = 0; j < height; ++j)
-  {
+  uint8_t* ptr = getPagePtr(page);
+  uint8_t dx;
+  uint8_t dy;
+  uint8_t bx;
+  uint8_t by;
+  if (x >= 0) { bx = 0; dx = x; }
+  else { bx = -x; dx = 0; }
+  if (y >= 0) { by = 0; dy = y; }
+  else { by = -y; dy = 0; }
+  // TODO: check if out of screen...
+  uint8_t bw = min(width - bx, PAGE_WIDTH - dx);
+  uint8_t bh = min(height - by, PAGE_HEIGHT - dy);
 
-//    
-//    int8_t colByte = pageXX / 8;
-//    int8_t colBit = pageXX % 8; // TODO: modulo
-//
-//    for (int x = 0; x < PAGE_WIDTH; ++x)
-//    {
-//      // TODO
-//    }
-//    
-    //mFramebuffer[(j + y) * 8  + x] = data[j];
-//    for (int i = 0; i < width; ++i)
-//    {    
-//      char* dstByte = mFramebuffer[j + y + x]; // TODO: check                 
-//    }
+  uint8_t dByteOffset = dy * PAGE_STRIDE + dx / 8; // TODO: replace with shift
+  uint8_t dBitOffset = dx % 8;
+
+  uint8_t sStride = bw / 8; // TODO: shift
+  if (bw % 8) ++sStride;
+  uint8_t sBitOffset = bx % 8;
+  uint8_t sByteOffset = by * sStride + bx / 8; // TODO: replace with shift
+
+  for (int j = 0; j < bh; ++j) // bitmap rows
+  {
+      uint8_t* dstPtr = ptr + dByteOffset + j * PAGE_STRIDE;
+      const uint8_t* srcPtr = data + sByteOffset + j * sStride;
+      uint8_t dstBit = dBitOffset;
+      uint8_t srcBit = sBitOffset;
+      for (uint8_t i = 0; i < bw; ++i)
+      {
+        // Draw rectangle...
+        //*dstPtr |= (1 << (7 - dstBit)); // TODO: swap bit direction... so byteswap will not be needed
+        
+        if (*srcPtr & (1 << (7 - srcBit))) // TODO: no pointers
+          *dstPtr |= (1 << (7 - dstBit));
+        
+        if (++dstBit == 8) 
+        {
+          dstBit = 0;
+          ++dstPtr;
+        }
+        
+        if (++srcBit == 8)
+        {
+          srcBit = 0;
+          ++srcPtr;
+        }
+      }
   }
 }
 
@@ -276,8 +307,11 @@ void Screen::display()
 {  
   // Column calculations
   int8_t col = -mShiftX; 
-  int8_t pageX = col / PAGE_WIDTH;
-  if (col < 0) --pageX;
+  int8_t pageX;
+  if (col >= 0)
+    pageX = col / PAGE_WIDTH;
+  else
+    pageX = (col + 1) / PAGE_WIDTH - 1;
   int8_t pageXX = col - pageX * PAGE_WIDTH; // Offset from start of the page, columns (bits)
     
   for (int8_t y = 0; y < PAGE_HEIGHT; ++y)
