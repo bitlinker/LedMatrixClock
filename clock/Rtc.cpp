@@ -25,6 +25,7 @@ void Rtc::init()
   RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
   printDateTime(compiled);
   Serial.println();
+  // TODO: dbg
   if (!mRtc.IsDateTimeValid()) 
   {
     Serial.println("RTC lost confidence in the DateTime!");
@@ -43,15 +44,21 @@ void Rtc::init()
   mRtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1kHz);
 }
 
-void Rtc::getTime()
+RtcDateTime Rtc::getTime()
 {
-  //mCurTime = mRtc.GetDateTime();
+  return mRtc.GetDateTime();
 }
 
-void Rtc::getTemp()
+void Rtc::setTime(const RtcDateTime& tm)
+{
+ mRtc.SetDateTime(tm); 
+}
+
+float Rtc::getTemp()
 {
   RtcTemperature temp = mRtc.GetTemperature();
-  Serial.print(temp.AsFloat());
-  Serial.println("C");
+//  Serial.print(temp.AsFloat());
+//  Serial.println("C");
+  return temp.AsFloat() * 10; // TODO: as int fixed
 }
 

@@ -13,8 +13,9 @@ class Rtc
     Rtc();
 
     void init();
-    void getTime();
-    void getTemp();
+    RtcDateTime getTime();
+    void setTime(const RtcDateTime& tm);
+    float getTemp();
 
     // TODO: alarms?
 

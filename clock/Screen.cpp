@@ -1,121 +1,5 @@
 #include "Screen.h"
 
-// 16x8 test
-const byte IMG01[] = 
-{
-  B00111000, B00010000,
-  B01000100, B00110000,
-  B01000100, B00010000,
-  B01000100, B00010000,
-  B01000100, B00010000,
-  B01000100, B00010000,
-  B01000100, B00010000,
-  B00111000, B00111000
-};
-
-const byte IMAGES[][8] = {
-  {
-    B00111000,
-    B01000100,
-    B01000100,
-    B01000100,
-    B01000100,
-    B01000100,
-    B01000100,
-    B00111000
-  }
-  ,{
-    B00010000,
-    B00110000,
-    B00010000,
-    B00010000,
-    B00010000,
-    B00010000,
-    B00010000,
-    B00111000
-  }
-  ,{
-    B00111000,
-    B01000100,
-    B00000100,
-    B00000100,
-    B00001000,
-    B00010000,
-    B00100000,
-    B01111100
-  }
-  ,{
-    B00111000,
-    B01000100,
-    B00000100,
-    B00011000,
-    B00000100,
-    B00000100,
-    B01000100,
-    B00111000
-  }
-  ,{
-    B00000100,
-    B00001100,
-    B00010100,
-    B00100100,
-    B01000100,
-    B01111100,
-    B00000100,
-    B00000100
-  }
-  ,{
-    B01111100,
-    B01000000,
-    B01000000,
-    B01111000,
-    B00000100,
-    B00000100,
-    B01000100,
-    B00111000
-  }
-  ,{
-    B00111000,
-    B01000100,
-    B01000000,
-    B01111000,
-    B01000100,
-    B01000100,
-    B01000100,
-    B00111000
-  }
-  ,{
-    B01111100,
-    B00000100,
-    B00000100,
-    B00001000,
-    B00010000,
-    B00100000,
-    B00100000,
-    B00100000
-  }
-  ,{
-    B00111000,
-    B01000100,
-    B01000100,
-    B00111000,
-    B01000100,
-    B01000100,
-    B01000100,
-    B00111000
-  }
-  ,{
-    B00111000,
-    B01000100,
-    B01000100,
-    B01000100,
-    B00111100,
-    B00000100,
-    B01000100,
-    B00111000
-  }
-};
-
 #define OP_NOOP   0
 #define OP_DIGIT0 1
 #define OP_DIGIT1 2
@@ -130,73 +14,6 @@ const byte IMAGES[][8] = {
 #define OP_SCANLIMIT   11
 #define OP_SHUTDOWN    12
 #define OP_DISPLAYTEST 15
-
-void Screen::drawDigit(byte device, byte digit, boolean isDimmed)
-{
-  // TODO
-//  for (byte r = 0; r < 8; ++r)
-//  {
-//    mLed.setRow(device, r, isDimmed ? 0 : IMAGES[digit][r]);
-//  }
-}
-
-inline uint8_t* Screen::getPagePtrMirrored(int8_t pageX, int8_t pageY)
-{
-  uint8_t pageIndex = (pageX + pageY) & 1;
-  return getPagePtr(pageIndex);
-}
-
-inline uint8_t* Screen::getPagePtr(uint8_t pageNum)
-{
-  return &mFramebuf[PAGE_SIZE * pageNum];
-}
-
-// TODO: move
-boolean dot = false;
-int8_t scrlx = 0;
-int8_t scrly = 0;
-int8_t scrlDir = 1;
-void Screen::updateScreen(uint8_t hour, uint8_t minute, uint8_t second)
-{
-  //scrly += scrlDir;
-  //scrlx += scrlDir;
-  //if (scrly >= 32 || scrly <= -32) scrlDir = -scrlDir;
-  //if (scrlx >= 64 || scrlx <= -64) scrlDir = -scrlDir;
-
-  //scrollX(scrlx);
-  //scrollY(scrly);
-  
-//  drawBitmap(0, 3, hour / 10, 8, 8, IMAGES[hour / 10]);
-//  drawDigit(3, hour / 10, dot);
-//  drawDigit(2, hour % 10, dot);
-//  drawDigit(1, minute / 10, false);
-//  drawDigit(0, minute % 10, false);
-
-  boolean dt = second % 2;
-
-//  setPixel(0, 0, 0, true);
-//  setPixel(0, 1, 0, true);
-//  setPixel(0, 7, 0, true);
-//  setPixel(0, 7, 1, true);
-//  setPixel(0, 31, 0, true);
-//  setPixel(0, 31, 7, true);
-//  setPixel(0, 0, 7, true);
-//  
-//  setPixel(1, 0, 0, true);
-//  setPixel(1, 31, 0, true);
-//  setPixel(1, 31, 7, true);
-//  setPixel(1, 0, 7, true);
-//  setPixel(1, 2, 0, true);
-
-  drawBitmap(0, 7, -1, 16, 8, IMG01);
-  
-//  setPixel(0, 15, 2, dt);
-//  setPixel(0, 15, 5, dt);
-//  setPixel(1, 14, 2, true);
-//  setPixel(1, 14, 5, true);
-  dot = !dot;
-  display();
-}
 
 Screen::Screen(int pinClk, int pinCs, int pinDin)
   : mPinClk(pinClk)
@@ -314,6 +131,17 @@ static void Swap32(uint32_t& val)
           ((val << 8) & 0xff0000) |
           ((val >> 8) & 0xff00) |
           ((val << 24) & 0xff000000);
+}
+
+inline uint8_t* Screen::getPagePtrMirrored(int8_t pageX, int8_t pageY)
+{
+  uint8_t pageIndex = (pageX + pageY) & 1;
+  return getPagePtr(pageIndex);
+}
+
+inline uint8_t* Screen::getPagePtr(uint8_t pageNum)
+{
+  return &mFramebuf[PAGE_SIZE * pageNum];
 }
 
 void Screen::display()
